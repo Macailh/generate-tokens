@@ -19,8 +19,36 @@ def generate_token(payload, secret_key, expiry_time=3600):
     return token
 
 
+def verify_token(token, secret_key):
+    try:
+        decoded_token = base64.urlsafe_b64decode(token)
+        json_data = decoded_token[:-32]
+        signature = decoded_token[-32:]
+
+        expected_signature = hmac.new(
+            secret_key.encode(), json_data, hashlib.sha256
+        ).digest()
+
+        return hmac.compare_digest(signature, expected_signature)
+    except Exception as e:
+        print("Error:", e)
+        return False
+
+
+def decode_token(token):
+    try:
+        decoded_token = base64.urlsafe_b64decode(token)
+        json_data = decoded_token[:-32]
+        return json.loads(json_data)
+    except Exception as e:
+        print("Error:", e)
+        return None
+
+
 payload = {"email": "example@email.com"}
 secret_key = "secret"
 token = generate_token(payload, secret_key)
 
 print(token)
+print(verify_token(token, secret_key))
+print(decode_token(token))
