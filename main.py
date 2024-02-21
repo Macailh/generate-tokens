@@ -2,10 +2,15 @@ import base64
 import json
 import hmac
 import hashlib
+import time
 
 
-def generate_token(payload, secret_key):
+def generate_token(payload, secret_key, expiry_time=3600):
+    payload["iat"] = int(time.time())
+    payload["exp"] = payload["iat"] + expiry_time
+
     json_data = json.dumps(payload)
+
     signature = hmac.new(
         secret_key.encode(), json_data.encode(), hashlib.sha256
     ).digest()
