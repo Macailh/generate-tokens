@@ -29,7 +29,15 @@ def verify_token(token, secret_key):
             secret_key.encode(), json_data, hashlib.sha256
         ).digest()
 
-        return hmac.compare_digest(signature, expected_signature)
+        if not hmac.compare_digest(signature, expected_signature):
+            return False
+
+        payload = json.loads(json_data)
+        if "exp" in payload:
+            if int(time.time()) > payload["exp"]:
+                return False  # Token has expired
+
+        return True
     except Exception as e:
         print("Error:", e)
         return False
@@ -47,7 +55,8 @@ def decode_token(token):
 
 payload = {}
 secret_key = "secret"
-token = generate_token(payload, secret_key)
+expiry_time = 3600  # 1 hour
+token = generate_token(payload, secret_key, expiry_time)
 
 print(token)
 print(verify_token(token, secret_key))
