@@ -3,6 +3,7 @@ import json
 import hmac
 import hashlib
 import time
+import secrets
 
 
 def generate_token(payload, secret_key, expiry_time=3600):
@@ -10,23 +11,24 @@ def generate_token(payload, secret_key, expiry_time=3600):
     payload["exp"] = payload["iat"] + expiry_time
 
     json_data = json.dumps(payload)
+    salt = secrets.token_bytes(32)
 
     signature = hmac.new(
-        secret_key.encode(), json_data.encode(), hashlib.sha256
+        secret_key.encode(), json_data.encode() + salt, hashlib.sha256
     ).digest()
-    token = base64.urlsafe_b64encode(json_data.encode() + signature).decode()
+    token = base64.urlsafe_b64encode(json_data.encode() + salt + signature).decode()
 
-    return token
+    return token, salt
 
 
-def verify_token(token, secret_key):
+def verify_token(token, secret_key, salt):
     try:
         decoded_token = base64.urlsafe_b64decode(token)
-        json_data = decoded_token[:-32]
+        json_data = decoded_token[:-64]
         signature = decoded_token[-32:]
 
         expected_signature = hmac.new(
-            secret_key.encode(), json_data, hashlib.sha256
+            secret_key.encode(), json_data + salt, hashlib.sha256
         ).digest()
 
         if not hmac.compare_digest(signature, expected_signature):
@@ -46,7 +48,7 @@ def verify_token(token, secret_key):
 def decode_token(token):
     try:
         decoded_token = base64.urlsafe_b64decode(token)
-        json_data = decoded_token[:-32]
+        json_data = decoded_token[:-64]
         return json.loads(json_data)
     except Exception as e:
         print("Error:", e)
@@ -56,8 +58,8 @@ def decode_token(token):
 payload = {}
 secret_key = "secret"
 expiry_time = 3600  # 1 hour
-token = generate_token(payload, secret_key, expiry_time)
+token, salt = generate_token(payload, secret_key, expiry_time)
 
 print(token)
-print(verify_token(token, secret_key))
+print(verify_token(token, secret_key, salt))
 print(decode_token(token))
