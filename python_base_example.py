@@ -45,7 +45,7 @@ def decode_token(token):
         return None
 
 
-payload = {"email": "example@email.com"}
+payload = {}
 secret_key = "secret"
 token = generate_token(payload, secret_key)
 
