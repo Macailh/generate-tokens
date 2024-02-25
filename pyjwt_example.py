@@ -7,21 +7,19 @@ secret_key = "your_strong_secret_key"
 
 def generate_jwt_token():
     """Generates a JWT with dynamic iat and exp timestamps"""
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.timezone.utc)
     payload = {
         "iat": now,  # Issued at - set to 'now'
         "exp": now + datetime.timedelta(minutes=30),  # Expiration - 30 minutes from now
     }
 
-    token = jwt.encode(payload, secret_key, algorithm="HS256")
-    return token
+    return jwt.encode(payload, secret_key, algorithm="HS256")
 
 
 def decode_jwt_token(token):
     """Decodes a JWT"""
     try:
-        decoded = jwt.decode(token, secret_key, algorithms=["HS256"])
-        return decoded
+        return jwt.decode(token, secret_key, algorithms=["HS256"])
     except jwt.exceptions.DecodeError:
         return None  # Indicate invalid token
 
@@ -30,9 +28,7 @@ def decode_jwt_token(token):
 token = generate_jwt_token()
 print("Encoded token:", token)
 
-# Decode the token
-decoded_token = decode_jwt_token(token)
-if decoded_token:
+if decoded_token := decode_jwt_token(token):
     print("Decoded payload:", decoded_token)
 else:
     print("Error: Invalid token.")
